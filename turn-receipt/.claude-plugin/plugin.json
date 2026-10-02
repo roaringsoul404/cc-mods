@@ -1,0 +1,6 @@
+{
+  "name": "turn-receipt",
+  "version": "0.1.0",
+  "description": "At the end of every turn Claude prints a receipt: files touched, commands run, tokens and what the turn cost",
+  "author": { "name": "Roaring Soul" }
+}

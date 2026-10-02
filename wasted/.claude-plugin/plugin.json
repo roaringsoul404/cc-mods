@@ -1,0 +1,6 @@
+{
+  "name": "wasted",
+  "version": "0.1.0",
+  "description": "When a tool call fails, the spinner dies: the line goes grey and WASTED fades in, in hand-drawn pixel lettering",
+  "author": { "name": "Roaring Soul" }
+}

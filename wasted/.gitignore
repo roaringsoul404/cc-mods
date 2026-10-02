@@ -1,0 +1,17 @@
+# Written by Claude Code on each --plugin-dir load
+.claude-plugin/types/
+tsconfig.json
+.DS_Store
+
+# Video build
+video/node_modules/
+video/out/frames/
+video/out/preview/
+video/out/sheet*.png
+video/rec-v*.json
+
+# Local sound override and third-party audio: never published
+sounds/custom.wav
+sounds/local/
+# Contains the third-party sound
+video/out/wasted-x.mp4

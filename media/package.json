@@ -1,0 +1,10 @@
+{
+  "name": "cc-mods-media",
+  "private": true,
+  "description": "Records real Claude Code sessions with a mod loaded and renders the README GIFs",
+  "type": "module",
+  "dependencies": {
+    "@xterm/xterm": "^6.0.0",
+    "puppeteer-core": "^25.12.0"
+  }
+}

@@ -1,0 +1,37 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css">
+<style>
+  html, body { margin: 0; background: #141414; }
+  #stage { width: 1080px; height: 1080px; position: relative; overflow: hidden; background: #141414; }
+  #term { position: absolute; left: 40px; top: 195px; }
+  .xterm-viewport { overflow: hidden !important; }
+</style>
+<div id="stage"><div id="term"></div></div>
+<script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
+<script>
+(async () => {
+  const rec = await (await fetch('rec.json')).json()
+  const term = new Terminal({
+    cols: rec.cols, rows: rec.rows, fontFamily: 'Menlo, monospace', fontSize: 20.6, lineHeight: 1.12,
+    theme: { background: '#141414', foreground: '#d6d6d6', cursor: '#141414' },
+    allowProposedApi: true, customGlyphs: true, cursorBlink: false, scrollback: 0,
+  })
+  term.open(document.getElementById('term'))
+  // DOM renderer: the WebGL one speckles block-glyph edges in headless
+  const chunks = rec.events.map(([t, b]) => [t, Uint8Array.from(atob(b), c => c.charCodeAt(0))])
+  let next = 0
+  // Write every chunk up to recording time t, then wait for paint
+  window.feedUntil = async (t) => {
+    while (next < chunks.length && chunks[next][0] <= t) {
+      await new Promise(r => term.write(chunks[next][1], r)); next++
+    }
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+  }
+  window.marks = rec.marks
+  window.firstRaster = (after) => {
+    for (const [t, b] of chunks) if (t > after && new TextDecoder().decode(b).includes('▄')) return t
+  }
+  window.__ready = true
+})().catch(e => { window.__error = String(e) })
+</script>

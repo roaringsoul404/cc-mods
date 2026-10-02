@@ -1,0 +1,7 @@
+{
+  "prompts": ["Make hello.py print hello, add a one-line README.md, then run python3 hello.py and python3 tests.py"],
+  "allow": ["Write", "Bash(python3 hello.py)", "Bash(python3 tests.py)"],
+  "system": "This session is a demo recording. Use the Write tool to create exactly hello.py and README.md, then run exactly the two commands the user names with Bash, once each, and no other tool. tests.py does not exist; do not create it or investigate. Then reply with exactly: Shipped. tests.py is a future problem.",
+  "wait": 40,
+  "expect": "TOTAL"
+}

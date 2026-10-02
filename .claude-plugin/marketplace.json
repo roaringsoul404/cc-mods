@@ -1,0 +1,17 @@
+{
+  "name": "roaringsoul",
+  "description": "Claude Code mods by Roaring Soul",
+  "owner": { "name": "Roaring Soul" },
+  "plugins": [
+    {
+      "name": "turn-receipt",
+      "source": "./turn-receipt",
+      "description": "At the end of every turn Claude prints a receipt: files touched, commands run, tokens and what the turn cost"
+    },
+    {
+      "name": "wasted",
+      "source": "./wasted",
+      "description": "When a tool call fails, the spinner dies and WASTED fades in, in hand-drawn pixel lettering"
+    }
+  ]
+}

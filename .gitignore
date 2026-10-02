@@ -1,0 +1,18 @@
+# Soul System internals, not part of the mods
+JOURNAL.md
+.claude/
+.DS_Store
+node_modules/
+
+# Video build output: regenerated, and posted on X directly
+wasted/video/out/
+# Local symlinks and debug logs point at absolute paths
+wasted/video/latest
+*.log
+
+# Mods kept local, not published
+still-watching/
+token-pet/
+# Media build output
+media/out/
+media/blocklist.txt
