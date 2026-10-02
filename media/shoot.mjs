@@ -1,6 +1,8 @@
 // node shoot.mjs <mod> preview t1,t2,...  → stills at recording times in out/<mod>/preview/
 // node shoot.mjs <mod> gif               → ../<mod>/demo.gif from <mod>/edit.json
-// edit.json: { fps, width, keys: [[videoT, recT], ...] } maps GIF time to recording time
+// node shoot.mjs <mod> film              → out/<mod>/<mod>-x.mp4, 1080 × 1080 for X, from edit.json's film
+// edit.json: { fps, width, keys: [[videoT, recT], ...], film: { fps, keys, top, bottom } }
+// keys map video time to recording time; top and bottom are the film's captions
 import puppeteer from 'puppeteer-core'
 import { createServer } from 'node:http'
 import { readFileSync, existsSync, statSync, mkdirSync, rmSync } from 'node:fs'
@@ -18,14 +20,14 @@ const server = createServer((req, res) => {
 await new Promise(r => server.listen(0, '127.0.0.1', r))
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser', headless: true,
-  args: ['--force-device-scale-factor=2'],
+  args: [`--force-device-scale-factor=${mode === 'film' ? 1 : 2}`],
 })
 try {
   const page = await browser.newPage()
   const errors = []
   page.on('pageerror', e => errors.push(String(e)))
-  await page.setViewport({ width: 1400, height: 1000 })
-  await page.goto(`http://127.0.0.1:${server.address().port}/player.html?mod=${mod}`)
+  await page.setViewport({ width: 1400, height: 1100 })
+  await page.goto(`http://127.0.0.1:${server.address().port}/player.html?mod=${mod}${mode === 'film' ? '&square=1' : ''}`)
   await page.waitForFunction('window.__ready || window.__error', { timeout: 60000 })
   const err = await page.evaluate(() => window.__error)
   if (err || errors.length) throw new Error(err || errors.join('\n'))
@@ -40,7 +42,8 @@ try {
     }
     console.log('marks', await page.evaluate(() => window.marks))
   } else {
-    const edit = JSON.parse(readFileSync(path.join(root, mod, 'edit.json'), 'utf8'))
+    const all = JSON.parse(readFileSync(path.join(root, mod, 'edit.json'), 'utf8'))
+    const edit = mode === 'film' ? all.film : all
     const dir = path.join(out, 'frames'); rmSync(dir, { recursive: true, force: true }); mkdirSync(dir, { recursive: true })
     const k = edit.keys
     const seconds = k[k.length - 1][0]
@@ -56,11 +59,20 @@ try {
       await page.evaluate(t => window.feedUntil(t), recAt(i / edit.fps))
       await stage.screenshot({ path: path.join(dir, `${String(i).padStart(4, '0')}.png`) })
     }
-    // Two-pass palette: one palette for the whole clip, only changed pixels redrawn
-    const gif = path.join(root, '..', mod, 'demo.gif')
-    execFileSync('ffmpeg', ['-v', 'error', '-y', '-framerate', String(edit.fps), '-i', path.join(dir, '%04d.png'),
-      '-vf', `scale=${edit.width || 800}:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle`,
-      gif], { stdio: 'inherit' })
-    console.log('wrote', gif, (statSync(gif).size / 1e6).toFixed(2), 'MB', N, 'frames')
+    if (mode === 'film') {
+      const mp4 = path.join(out, `${mod}-x.mp4`)
+      execFileSync('ffmpeg', ['-v', 'error', '-y', '-framerate', String(edit.fps), '-i', path.join(dir, '%04d.png'),
+        '-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mp4], { stdio: 'inherit' })
+      execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', mp4, '-vf', 'fps=3,scale=270:-2,tile=6x6', '-frames:v', '1',
+        path.join(out, `${mod}-x-contact.jpg`)], { stdio: 'inherit' })
+      console.log('wrote', mp4, (statSync(mp4).size / 1e6).toFixed(2), 'MB', N, 'frames')
+    } else {
+      // Two-pass palette: one palette for the whole clip, only changed pixels redrawn
+      const gif = path.join(root, '..', mod, 'demo.gif')
+      execFileSync('ffmpeg', ['-v', 'error', '-y', '-framerate', String(edit.fps), '-i', path.join(dir, '%04d.png'),
+        '-vf', `scale=${edit.width || 800}:-2:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle`,
+        gif], { stdio: 'inherit' })
+      console.log('wrote', gif, (statSync(gif).size / 1e6).toFixed(2), 'MB', N, 'frames')
+    }
   }
 } finally { await browser.close(); server.close() }

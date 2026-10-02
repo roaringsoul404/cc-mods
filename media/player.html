@@ -9,15 +9,29 @@
   #bar i { width: 11px; height: 11px; border-radius: 50%; background: #3a3a3a; }
   #term { padding: 6px 14px 14px; }
   .xterm-viewport { overflow: hidden !important; }
+  /* ?square=1: the 1080 × 1080 frame for X, the window centred between two captions */
+  body.square #stage { width: 1080px; height: 1080px; box-sizing: border-box; padding: 0; display: flex;
+    flex-direction: column; align-items: center; justify-content: center; gap: 34px; }
+  .cap { display: none; font: 500 30px/1.2 Menlo, monospace; color: #d6d6d6; letter-spacing: -0.5px; }
+  .cap b { color: #D77757; font-weight: 700; }
+  .cap.small { font-size: 19px; color: #7a7a7a; letter-spacing: 0; }
+  body.square .cap { display: block; }
 </style>
-<div id="stage"><div id="win"><div id="bar"><i></i><i></i><i></i></div><div id="term"></div></div></div>
+<div id="stage"><div class="cap" id="top"></div><div id="win"><div id="bar"><i></i><i></i><i></i></div><div id="term"></div></div><div class="cap small" id="bottom"></div></div>
 <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
 <script>
 (async () => {
   const mod = new URLSearchParams(location.search).get('mod')
   const rec = await (await fetch(`${mod}/rec.json`)).json()
+  const params = new URLSearchParams(location.search)
+  if (params.get('square')) {
+    document.body.classList.add('square')
+    const edit = await (await fetch(`${mod}/edit.json`)).json()
+    document.getElementById('top').innerHTML = edit.film.top
+    document.getElementById('bottom').textContent = edit.film.bottom
+  }
   const term = new Terminal({
-    cols: rec.cols, rows: rec.rows, fontFamily: 'Menlo, monospace', fontSize: 15, lineHeight: 1.12,
+    cols: rec.cols, rows: rec.rows, fontFamily: 'Menlo, monospace', fontSize: new URLSearchParams(location.search).get('square') ? 19.5 : 15, lineHeight: 1.12,
     theme: { background: '#141414', foreground: '#d6d6d6', cursor: '#141414' },
     allowProposedApi: true, customGlyphs: true, cursorBlink: false, scrollback: 0,
   })
